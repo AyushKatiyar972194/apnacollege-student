@@ -13,6 +13,13 @@ body {
   font-weight: weight !important;
   font-style: normal !important;
 }
+
+#filters::-webkit-scrollbar{
+   display: none;
+ }
+body::-webkit-scrollbar{
+   display: none;
+   }
 .container{
    flex: 1;
 }
