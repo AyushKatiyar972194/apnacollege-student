@@ -18,6 +18,8 @@
       width: 100% !important;
       align-items: center;
       height: 100px !important;
+      overflow:scroll;
+      overflow: hidden;
     }
     #filters a {
       color: black;
@@ -33,7 +35,12 @@
         .filter:hover{
             opacity: 1;
             cursor: pointer;
+            transform: scale(1.05) !important;
+            transition: 100ms ease all !important;
         }
+        .filter p {
+      font-size: 0.95rem;
+    }
         .tax-info{
             display: none;
         }
@@ -42,8 +49,10 @@
             border-radius: 1rem;
             height: 3.25rem;
             padding: 1rem;
-            margin-left: 1rem;
             display: flex;
+            min-width: 250px;
+            width: fit-content;
+            margin-top: 0.8rem;
             align-items: center;
         }
         .selected-filter {
