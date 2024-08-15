@@ -23,6 +23,7 @@ const listingRouter = require("./routes/listing.js");
 const reviewRouter = require("./routes/review.js");
 const userRouter = require("./routes/user.js");
 const { options } = require("joi");
+const axios = require('axios'); //Installed Axios- npm install axios For Hack of render reload
 
 app.use(express.urlencoded({extended: true}));
 app.use(methodOverride("_method"));
@@ -113,6 +114,23 @@ app.use((req,res,next)=>{
 //     res.send(registeredUser);
 // });
 
+// Below Hack for render slow down problem 
+const url = `https://apnacollege-student.onrender.com`; // Replace with your Render URL
+const interval = 30000; // Interval in milliseconds (30 seconds)
+
+function reloadWebsite() {
+  axios.get(url)
+    .then(response => {
+      console.log(`Reloaded at ${new Date().toISOString()}: Status Code ${response.status}`);
+    })
+    .catch(error => {
+      console.error(`Error reloading at ${new Date().toISOString()}:`, error.message);
+    });
+}
+
+
+setInterval(reloadWebsite, interval);
+// Above Hack for render slow down problem 
 app.use("/listings", listingRouter);
 app.use("/listings/:id/reviews",reviewRouter)
 app.use("/",userRouter);
