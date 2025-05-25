@@ -152,7 +152,33 @@ module.exports = {
 
  async function search(req, res) {
   let { title } = req.query;
+  
+  if (!title) {
+    req.flash("error", "Please enter a search term");
+    return res.redirect("/listings");
+  }
 
-  const allListings = await Listing.find({ title });
-  res.render("./listings/index.ejs", { allListings });
-};
+  try {
+    // Create a case-insensitive regex pattern for partial matches
+    const searchPattern = new RegExp(title, 'i');
+    
+    const allListings = await Listing.find({
+      $or: [
+        { title: searchPattern },
+        { location: searchPattern },
+        { country: searchPattern }
+      ]
+    });
+
+    if (allListings.length === 0) {
+      req.flash("error", "No listings found matching your search");
+      return res.redirect("/listings");
+    }
+
+    res.render("listings/index.ejs", { allListings });
+  } catch (error) {
+    console.error("Search error:", error);
+    req.flash("error", "An error occurred while searching");
+    res.redirect("/listings");
+  }
+}
