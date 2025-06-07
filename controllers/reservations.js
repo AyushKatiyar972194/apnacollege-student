@@ -469,6 +469,12 @@ async function cancelReservation(req, res) {
             dbUser = await getOrCreateUser(req.user);
         } catch (userError) {
             console.error('Error finding/creating user:', userError);
+            if (req.xhr || req.headers.accept.includes('application/json')) {
+                return res.status(500).json({
+                    success: false,
+                    error: "Failed to fetch user data"
+                });
+            }
             req.flash("error", "Failed to fetch user data");
             return res.redirect("/reservations/my-reservations");
         }
@@ -476,6 +482,12 @@ async function cancelReservation(req, res) {
         const reservation = await Reservation.findById(req.params.id);
         
         if (!reservation) {
+            if (req.xhr || req.headers.accept.includes('application/json')) {
+                return res.status(404).json({
+                    success: false,
+                    error: "Reservation not found"
+                });
+            }
             req.flash("error", "Reservation not found");
             return res.redirect("/reservations/my-reservations");
         }
@@ -488,6 +500,12 @@ async function cancelReservation(req, res) {
 
         // Check if user owns the reservation
         if (!reservation.user.equals(dbUser._id)) {
+            if (req.xhr || req.headers.accept.includes('application/json')) {
+                return res.status(403).json({
+                    success: false,
+                    error: "You don't have permission to cancel this reservation"
+                });
+            }
             req.flash("error", "You don't have permission to cancel this reservation");
             return res.redirect("/reservations/my-reservations");
         }
@@ -529,6 +547,19 @@ async function cancelReservation(req, res) {
             cancellationFee
         });
 
+        // Return JSON for AJAX requests
+        if (req.xhr || req.headers.accept.includes('application/json')) {
+            return res.json({
+                success: true,
+                message: "Reservation cancelled successfully",
+                cancellationReason,
+                refundAmount,
+                cancellationFee,
+                refundStatus: reservation.refundStatus
+            });
+        }
+
+        // Regular request - redirect with flash message
         req.flash("success", "Reservation cancelled successfully");
         res.redirect("/reservations/my-reservations");
     } catch (error) {
@@ -541,6 +572,14 @@ async function cancelReservation(req, res) {
                 email: req.user.emails?.[0]?.value
             } : 'not logged in'
         });
+
+        if (req.xhr || req.headers.accept.includes('application/json')) {
+            return res.status(500).json({
+                success: false,
+                error: "Failed to cancel reservation"
+            });
+        }
+
         req.flash("error", "Failed to cancel reservation");
         res.redirect("/reservations/my-reservations");
     }
