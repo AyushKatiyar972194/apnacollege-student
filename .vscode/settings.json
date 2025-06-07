@@ -1,0 +1,4 @@
+{
+    "livePreview.defaultPreviewPath": "/views/users/login.ejs",
+    "codium.codeCompletion.enable": true
+}

@@ -1,0 +1,137 @@
+<%- include('../includes/header') %>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-10">
+      <h2 class="mb-4 fw-bold text-center display-5">My Bookings</h2>
+      <% if(reservations.length === 0) { %>
+        <div class="alert alert-info text-center fs-5 py-4">
+          You haven't made any bookings yet.<br>
+          <a href="/listings" class="alert-link">Browse listings</a> to find your perfect stay.
+        </div>
+      <% } else { %>
+        <div class="row g-4">
+          <% reservations.forEach(reservation => { %>
+            <div class="col-md-6 col-xl-4">
+              <div class="card h-100 shadow-sm border-0">
+                <img src="<%= reservation.listing.image.url || reservation.listing.image %>"
+                  class="card-img-top rounded-top" 
+                  alt="<%= reservation.listing.title %>"
+                  style="height: 220px; object-fit: cover;">
+                <div class="card-body d-flex flex-column">
+                  <h5 class="card-title fw-semibold mb-2"><%= reservation.listing.title %></h5>
+                  <p class="card-text text-muted mb-2">
+                    <i class="fas fa-map-marker-alt"></i> <%= reservation.listing.location %>
+                  </p>
+                  <div class="booking-details mb-2">
+                    <div class="row g-1">
+                      <div class="col-6 small"><strong>Check-in:</strong> <%= new Date(reservation.checkIn).toLocaleDateString() %></div>
+                      <div class="col-6 small"><strong>Check-out:</strong> <%= new Date(reservation.checkOut).toLocaleDateString() %></div>
+                      <div class="col-6 small"><strong>Guests:</strong> <%= reservation.numberOfGuests %></div>
+                      <div class="col-6 small"><strong>Total:</strong> ₹<%= reservation.totalPrice.toLocaleString('en-IN') %></div>
+                    </div>
+                  </div>
+                  <div class="mb-2">
+                    <strong>Status:</strong>
+                    <span class="badge px-3 py-2 fs-6 <%= reservation.status === 'confirmed' ? 'bg-success' : reservation.status === 'pending' ? 'bg-warning text-dark' : 'bg-danger' %>">
+                      <%= reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1) %>
+                    </span>
+                  </div>
+                  <% if(reservation.status === 'confirmed') { %>
+                    <div class="cancellation-policy mt-2">
+                      <h6 class="text-danger mb-2">Cancellation Policy:</h6>
+                      <ul class="list-unstyled mb-2">
+                        <li><i class="fas fa-check-circle text-success"></i> Free cancellation within 1 hour of booking</li>
+                        <li><i class="fas fa-times-circle text-danger"></i> No refund after 1 hour of booking</li>
+                        <li><i class="fas fa-times-circle text-danger"></i> No refund after check-in</li>
+                      </ul>
+                    </div>
+                    <div class="mt-auto">
+                      <button class="btn btn-outline-danger btn-sm w-100 fw-semibold" 
+                        onclick="cancelReservation('<%= reservation._id %>')">
+                        Cancel Booking
+                      </button>
+                    </div>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div> 
+
+<script>
+async function cancelReservation(reservationId) {
+    if(confirm('Are you sure you want to cancel this booking?\n\nPlease note:\n- Free cancellation within 1 hour of booking\n- No refund after 1 hour of booking\n- No refund after check-in')) {
+        try {
+            // Ensure we have the full reservation ID
+            if (!reservationId || reservationId.length < 24) {
+                throw new Error('Invalid reservation ID');
+            }
+            
+            const url = `/reservations/${reservationId}/cancel`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin'
+            });
+
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                // If the text contains success message, the cancellation worked
+                if (text.includes('Reservation cancelled successfully')) {
+                    window.location.reload();
+                    return;
+                }
+                throw new Error('Server returned non-JSON response');
+            }
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to cancel booking');
+            }
+
+            if(data.success) {
+                let message = 'Booking cancelled successfully.\n\n';
+                if (data.cancellationReason) {
+                    message += `Reason: ${data.cancellationReason}\n`;
+                }
+                if (data.refundAmount > 0) {
+                    message += `Refund amount: ₹${data.refundAmount.toLocaleString('en-IN')}\n`;
+                    message += `Refund status: ${data.refundStatus}\n`;
+                    if (data.refundStatus === 'pending') {
+                        message += '\nNote: Your refund is being processed. It may take 5-7 business days to reflect in your account.';
+                    }
+                }
+                if (data.cancellationFee > 0) {
+                    message += `Cancellation fee: ₹${data.cancellationFee.toLocaleString('en-IN')}`;
+                }
+                alert(message);
+                window.location.reload();
+            } else {
+                throw new Error(data.error || 'Failed to cancel booking');
+            }
+        } catch(error) {
+            console.error('Error details:', error);
+            // Only redirect to login if we get a specific authentication error
+            if (error.message.includes('Authentication required') || error.message.includes('User session expired')) {
+                window.location.href = '/login';
+            } else {
+                alert(error.message || 'Something went wrong. Please try again.');
+            }
+        }
+    }
+}
+</script>
+
+<%- include('../includes/footer') %> 

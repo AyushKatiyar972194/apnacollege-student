@@ -6,57 +6,160 @@
     <title>FortuneVila</title>
 </head> -->
 <% layout("/layouts/boilerplate")%>
-<body>
-    <!-- <h3>All Listings</h3> -->
-    <!-- <form  method="GET" action="/listings/new">
-        <button>Create New Listing</button>
-    </form> -->
+<body class="listings-bg" style="min-height: 100vh; display: flex; flex-direction: column;">
+  <div class="container d-flex flex-column flex-grow-1" style="flex: 1 0 auto; min-height: 0;">
+    <div class="d-flex flex-row align-items-center justify-content-between mb-2" style="gap: 0.5rem;">
+      <h2 class="fw-bold mb-0" style="font-size:1.35rem;">All Listings</h2>
+      <div class="tax-toggle ms-auto">
+        <div class="form-check-reverse form-switch">
+          <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault">
+          <label class="form-check-label" for="flexSwitchCheckDefault">Display total after taxes</label>
+        </div>
+      </div>
+    </div>
     <style>
-        #filters {
-      display: flex;
-      /* flex-wrap: wrap; */
-      width: 100% !important;
-      align-items: center;
-      height: 100px !important;
-      overflow:scroll;
-    }
-    #filters a {
-      color: black;
-      text-decoration: none;
-    }
-       
-        .filter{
-            text-align: center;
-            margin-right: 2rem;
-            margin-top: 2rem;
-            opacity: 0.7;
-        }
-        .filter:hover{
-            opacity: 1;
-            cursor: pointer;
-            transform: scale(1.05) !important;
-            transition: 100ms ease all !important;
-        }
-        .filter p {
-      font-size: 0.95rem;
-    }
-        .tax-info{
-            display: none;
-        }
-        .tax-toggle{
-            border:1px solid black;
-            border-radius: 1rem;
-            height: 3.25rem;
-            padding: 1rem;
-            display: flex;
-            min-width: 250px;
-            width: fit-content;
-            margin-top: 0.8rem;
-            align-items: center;
-        }
-        .selected-filter {
-border-bottom: 3px solid #683193; /* Adjust the styling as needed */
-    }
+      .listings-bg {
+        background: #f7f7fa;
+      }
+      #filters {
+        display: flex;
+        width: 100% !important;
+        align-items: center;
+        min-height: 64px;
+        height: auto;
+        overflow-x: auto;
+        overflow-y: hidden;
+        background: #fff;
+        border-radius: 0.7rem;
+        box-shadow: 0 1px 4px rgba(60,64,67,.06);
+        padding: 0 0.5rem;
+        margin-bottom: 1rem;
+        gap: 0.5rem;
+        scrollbar-width: none; /* Firefox */
+      }
+      #filters::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Edge */
+      }
+      #filters a {
+        color: black;
+        text-decoration: none;
+      }
+      .filter {
+        text-align: center;
+        margin-right: 1rem;
+        margin-top: 0.7rem;
+        opacity: 0.7;
+        min-width: 60px;
+        font-size: 0.97rem;
+      }
+      .filter:last-child {
+        margin-right: 0;
+      }
+      .filter:hover {
+        opacity: 1;
+        cursor: pointer;
+        transform: scale(1.04) !important;
+        transition: 100ms cubic-bezier(.4,0,.2,1);
+      }
+      .filter p {
+        font-size: 0.93rem;
+        margin-bottom: 0;
+      }
+      .tax-info {
+        display: none;
+      }
+      .tax-toggle {
+        border: 1px solid #e0e0e0;
+        background: #fafbfc;
+        border-radius: 1rem;
+        height: 3.25rem;
+        padding: 1rem;
+        display: flex;
+        min-width: 250px;
+        width: fit-content;
+        margin-top: 0.8rem;
+        align-items: center;
+        box-shadow: 0 1px 4px rgba(60,64,67,.06);
+      }
+      .selected-filter {
+        border-bottom: 3px solid #683193;
+        opacity: 1;
+      }
+      .listing-card {
+        border: none !important;
+        border-radius: 0.7rem !important;
+        box-shadow: 0 1px 6px rgba(60,64,67,.07);
+        /* margin-bottom: 1.1rem; */
+        /* transition: box-shadow 0.13s, transform 0.13s; */
+        background: #fff;
+        min-height: 260px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: 0.5rem;
+        transform: translateY(0);
+        transition: transform 0.2s ease-in-out;
+      }
+      .listing-card:hover {
+        /* box-shadow: 0 4px 16px rgba(60,64,67,.13);
+        transform: translateY(-2px) scale(1.012); */
+        z-index: 2;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+      .card-img-top {
+        border-radius: 0.7rem 0.7rem 0 0 !important;
+        width: 100% !important;
+        object-fit: cover !important;
+        height: 15.5rem !important;
+        background: #eaeaea;
+        border-radius: 0.5rem 0.5rem 0 0;
+        /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
+        /* transform: translateY(0); */
+        transition: transform 0.2s ease-in-out;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+      .listing-link {
+        text-decoration: none;
+        color: inherit;
+      }
+      .listing-title {
+        /* font-size: 1.1rem; */
+        font-weight: 600;
+        margin-bottom: 0.2rem;
+        font-size: 1.25rem;
+        line-height: 1.5;
+        font-family: 'Open Sans', sans-serif;
+      }
+      .listing-meta {
+        font-size: 0.97rem;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        margin-bottom: 0.2rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        font-family: 'Open Sans', sans-serif;
+      }
+      .listing-price {
+        font-size: 1.08rem;
+        font-weight: 500;
+        color: #222;
+      }
+      .listing-badge {
+        background: #683193;
+        color: #fff;
+        font-size: 0.8rem;
+        border-radius: 0.5rem;
+        padding: 0.18em 0.7em;
+        margin-left: 0.5em;
+        font-weight: 500;
+      }
     </style>
     <div id="filters">
         <a href="/listings/filter/1">
@@ -119,40 +222,124 @@ border-bottom: 3px solid #683193; /* Adjust the styling as needed */
       <p>Hostel</p>
       </div>
    </a>
-       <div class="tax-toggle">
-        <div class="form-check-reverse form-switch">
-            <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault">
-            <label class="form-check-label" for="flexSwitchCheckDefault">Display total after taxes</label>
-          </div>
-    </div>
+   <a href="/listings/filter/11">
+      <div class="filter" id="filter-farmhouse" category="farmhouse">
+        <div><i class="fa-solid fa-tractor"></i></div>
+        <p>Farmhouse</p>
+      </div>
+    </a>
+    <a href="/listings/filter/12">
+      <div class="filter" id="filter-treehouse" category="treehouse">
+        <div><i class="fa-solid fa-tree"></i></div>
+        <p>Treehouse</p>
+      </div>
+    </a>
+    <a href="/listings/filter/14">
+      <div class="filter" id="filter-citycenter" category="citycenter">
+        <div><i class="fa-solid fa-city"></i></div>
+        <p>City Center</p>
+      </div>
+    </a>
+    <a href="/listings/filter/15">
+      <div class="filter" id="filter-countryside" category="countryside">
+        <div><i class="fa-solid fa-tractor"></i></div>
+        <p>Countryside</p>
+      </div>
+    </a>
+    <a href="/listings/filter/16">
+      <div class="filter" id="filter-lakefront" category="lakefront">
+        <div><i class="fa-solid fa-water"></i></div>
+        <p>Lakefront</p>
+      </div>
+    </a>
+    <a href="/listings/filter/17">
+      <div class="filter" id="filter-petfriendly" category="petfriendly">
+        <div><i class="fa-solid fa-dog"></i></div>
+        <p>Pet Friendly</p>
+      </div>
+    </a>
+    <a href="/listings/filter/18">
+      <div class="filter" id="filter-family" category="family">
+        <div><i class="fa-solid fa-people-roof"></i></div>
+        <p>Family</p>
+      </div>
+    </a>
+    <a href="/listings/filter/19">
+      <div class="filter" id="filter-budget" category="budget">
+        <div><i class="fa-solid fa-wallet"></i></div>
+        <p>Budget</p>
+      </div>
+    </a>
+    <a href="/listings/filter/20">
+      <div class="filter" id="filter-luxury" category="luxury">
+        <div><i class="fa-solid fa-gem"></i></div>
+        <p>Luxury</p>
+      </div>
+    </a>
+    <a href="/listings/filter/21">
+      <div class="filter" id="filter-unique" category="unique">
+        <div><i class="fa-solid fa-star"></i></div>
+        <p>Unique</p>
+      </div>
+    </a>
+    <a href="/listings/filter/22">
+      <div class="filter" id="filter-camping" category="camping">
+        <div><i class="fa-solid fa-campground"></i></div>
+        <p>Camping</p>
+      </div>
+    </a>
+    <a href="/listings/filter/23">
+      <div class="filter" id="filter-skiing" category="skiing">
+        <div><i class="fa-solid fa-person-skiing"></i></div>
+        <p>Skiing</p>
+      </div>
+    </a>
+    <a href="/listings/filter/24">
+      <div class="filter" id="filter-golf" category="golf">
+        <div><i class="fa-solid fa-golf-ball-tee"></i></div>
+        <p>Golf</p>
+      </div>
+    </a>
+    <a href="/listings/filter/25">
+      <div class="filter" id="filter-spa" category="spa">
+        <div><i class="fa-solid fa-spa"></i></div>
+        <p>Spa</p>
+      </div>
+    </a>
+    <a href="/listings/filter/26">
+      <div class="filter" id="filter-business" category="business">
+        <div><i class="fa-solid fa-briefcase"></i></div>
+        <p>Business</p>
+      </div>
+    </a>
 </div>
-   
-    <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1 mt-3">
-    <% for(let listing of allListings){ %>
-<a href="/listings/<%= listing._id%>" class="listing-link">
-    <div class="card col listing-card">
-        <img src="<%= listing.image.url || listing.image%>" class="card-img-top" alt="listing_image" style="height: 20rem;">
-        <div class="card-img-overlay"></div>
-        <div class="card-body">
-          <p class="card-text">
-            <b><%= listing.title %></b>
-           <br>
-           <span class="price-info">
-            &#8377;<%= listing.price.toLocaleString("en-IN") %> / night
-          </span>
-          <span class="tax-info" style="display: none;"> <!-- Initial display is set to none -->
-            &nbsp;
-            <i class="rs-sign"><b> &#8377;<%= (listing.price * 1.18).toLocaleString("en-IN") %></b>
-              &nbsp; &nbsp; +18% total after taxes
-            </i>
-          </span>
-
-          </p>
+<div class="row row-cols-lg-3 row-cols-md-2 row-cols-1 g-4 mt-2 flex-grow-1 flex-fill">
+  <% for(let listing of allListings){ %>
+    <div class="col d-flex align-items-stretch">
+      <a href="/listings/<%= listing._id%>" class="listing-link w-100" aria-label="View details for <%= listing.title %>" tabindex="0">
+        <div class="card listing-card h-100">
+          <img src="<%= listing.image?.url || listing.image || '/images/placeholder.png' %>" class="card-img-top" alt="<%= listing.title %> image" onerror="this.onerror=null;this.src='/images/placeholder.png';">
+          <div class="card-body py-2 px-2 d-flex flex-column justify-content-between">
+            <div>
+              <div class="listing-title text-truncate" title="<%= listing.title %>"><%= listing.title %></div>
+              <div class="listing-meta text-truncate" title="<%= listing.location || 'Unknown location' %>">
+                <span><i class="fa-solid fa-location-dot"></i> <%= listing.location || 'Unknown location' %></span>
+              </div>
+            </div>
+            <div class="listing-price mt-2">
+              <span class="price-info">
+                &#8377;<%= listing.price.toLocaleString("en-IN") %> / night
+              </span>
+              <span class="tax-info" style="display: none;">
+                <i class="rs-sign"><b> &#8377;<%= (listing.price * 1.18).toLocaleString("en-IN") %></b> +18% after tax</i>
+              </span>
+            </div>
+          </div>
         </div>
+      </a>
     </div>
-</a>
-      <%}%>
-    </div>
+  <% } %>
+</div>
 
 <script>
 

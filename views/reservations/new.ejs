@@ -1,0 +1,164 @@
+<%- include('../includes/header') %>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Book Your Stay</h3>
+                </div>
+                <div class="card-body">
+                    <form id="reservationForm">
+                        <input type="hidden" name="listingId" value="<%= listing._id %>">
+                        
+                        <div class="mb-3">
+                            <label for="checkIn" class="form-label">Check-in Date</label>
+                            <input type="date" class="form-control" id="checkIn" name="checkIn" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="checkOut" class="form-label">Check-out Date</label>
+                            <input type="date" class="form-control" id="checkOut" name="checkOut" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="numberOfGuests" class="form-label">Number of Guests</label>
+                            <input type="number" class="form-control" id="numberOfGuests" name="numberOfGuests" min="1" max="<%= listing.maxGuests %>" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <h4>Price Details</h4>
+                            <p>Price per night: ₹<%= listing.price %></p>
+                            <p>Number of nights: <span id="nights">0</span></p>
+                            <p>Total price: ₹<span id="totalPrice">0</span></p>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Proceed to Payment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkInInput = document.getElementById('checkIn');
+    const checkOutInput = document.getElementById('checkOut');
+    const nightsSpan = document.getElementById('nights');
+    const totalPriceSpan = document.getElementById('totalPrice');
+    const pricePerNight = <%= listing.price %>;
+    let reservationId = null;
+
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    checkInInput.min = today;
+
+    function calculateTotal() {
+        const checkIn = new Date(checkInInput.value);
+        const checkOut = new Date(checkOutInput.value);
+        
+        if (checkIn && checkOut && checkOut > checkIn) {
+            const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+            const total = nights * pricePerNight;
+            
+            nightsSpan.textContent = nights;
+            totalPriceSpan.textContent = total;
+        } else {
+            nightsSpan.textContent = '0';
+            totalPriceSpan.textContent = '0';
+        }
+    }
+
+    checkInInput.addEventListener('change', function() {
+        checkOutInput.min = this.value;
+        calculateTotal();
+    });
+
+    checkOutInput.addEventListener('change', calculateTotal);
+
+    document.getElementById('reservationForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = {
+            listingId: document.querySelector('input[name="listingId"]').value,
+            checkIn: checkInInput.value,
+            checkOut: checkOutInput.value,
+            numberOfGuests: document.getElementById('numberOfGuests').value
+        };
+
+        try {
+            const response = await fetch('/reservations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                reservationId = data.reservationId;
+                const options = {
+                    key: 'rzp_test_gi3G6jtIqXNtxv',
+                    amount: data.amount,
+                    currency: "INR",
+                    name: "StayEase",
+                    description: "Booking Payment",
+                    order_id: data.orderId,
+                    handler: function (response) {
+                        verifyPayment(response);
+                    },
+                    prefill: {
+                        name: "<%= user.name %>",
+                        email: "<%= user.email %>"
+                    },
+                    theme: {
+                        color: "#3399cc"
+                    }
+                };
+
+                const rzp1 = new Razorpay(options);
+                rzp1.open();
+            } else {
+                alert(data.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Something went wrong. Please try again.');
+        }
+    });
+
+    async function verifyPayment(response) {
+        try {
+            const verifyResponse = await fetch('/reservations/verify-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                    reservationId: reservationId
+                })
+            });
+
+            const data = await verifyResponse.json();
+
+            if (data.success) {
+                window.location.href = `/reservations/success?reservationId=${reservationId}`;
+            } else {
+                window.location.href = `/reservations/failed?reservationId=${reservationId}`;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            window.location.href = `/reservations/failed?reservationId=${reservationId}`;
+        }
+    }
+});
+</script>
+
+<%- include('../includes/footer') %> 

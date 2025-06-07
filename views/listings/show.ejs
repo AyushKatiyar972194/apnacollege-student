@@ -1,238 +1,450 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head> -->
 <% layout("/layouts/boilerplate")%>
 <body>
-  <style>
-    .rounded-rect {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 0 50px -25px black;
-    }
-     
-    .flex-center {
-    position: absolute;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    }
-     
-    .flex-center.left {
-    left: 0px;
-    }
-     
-    .flex-center.right {
-    right: 0px;
-    }
-     
-  .geocoder-dropdown-item {
-    padding: 5px;
-    }
-    .geocoder-dropdown-icon {
-    margin-right: 10px;
-    }
-    .geocoder-dropdown-text {
-    color: #5a3fc0;
-  font-family: Arial, Helvetica, sans-serif;
-font-size: larger;
+<style>
+body {
+  background: #f6f7fb;
 }
-.mapboxgl-ctrl-geocoder--input {
-    font: inherit;
-    width: 100%;
-    border: 0;
-    background-color: transparent;
-    margin: 0;
-    height: 50px;
-    color: #404040;
-    color: rgba(0, 0, 0, 0.75);
-    padding: 6px 45px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
+.header-img-wrap {
+  position: relative;
+  margin-bottom: 2.5rem;
 }
-.mapboxgl-ctrl-geocoder {
-   position: relative;
-   bottom: 120px;
-   right: 580px;
+.header-img {
+  width: 100%;
+  height: 380px;
+  object-fit: cover;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.10);
+}
+.header-gradient {
+  position: absolute;
+  left: 0; right: 0; bottom: 0; top: 0;
+  border-radius: 1.5rem;
+  background: linear-gradient(180deg,rgba(0,0,0,0.10) 40%,rgba(0,0,0,0.55) 100%);
+}
+.header-content {
+  position: absolute;
+  left: 0; bottom: 0;
+  padding: 2.5rem 2rem 1.5rem 2rem;
+  color: #fff;
+  z-index: 2;
+  max-width: 80%;
+}
+.header-title {
+  font-size: 2.4rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 12px rgba(0,0,0,0.18);
+}
+.header-location {
+  font-size: 1.15rem;
+  opacity: 0.95;
+  font-weight: 500;
+  text-shadow: 1px 1px 8px rgba(0,0,0,0.12);
+}
+.card-custom {
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.09);
+  border: none;
+  margin-bottom: 2rem;
+  transition: box-shadow 0.2s;
+}
+.card-custom:hover {
+  box-shadow: 0 6px 32px rgba(0,0,0,0.13);
+}
+.price-tag {
+  color: #28a745;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+#map-container {
+  min-height: 350px;
+  background: #f8f9fa;
+  border-radius: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+}
+#map {
+  height: 320px;
+  width: 100%;
+  max-width: 600px;
+  border-radius: 1rem;
+  border: 1.5px solid #e9ecef;
+  background: #fff;
+}
+.review-card {
+  border-radius: 1rem;
+  border: 1px solid #e9ecef;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s;
+}
+.review-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+.review-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 0.75rem;
+  background: #e9ecef;
+  display: inline-block;
+}
+.sticky-sidebar {
+  position: sticky;
+  top: 2.5rem;
+}
+@media (max-width: 991px) {
+  .sticky-sidebar { position: static; }
+  .header-img { height: 220px; }
+  .header-content { max-width: 100%; padding: 1.2rem; }
+}
+</style>
 
-}
-  .left.collapsed {
-    transform: translateX(-295px);
-    }
-     
-    .right.collapsed {
-    transform: translateX(295px);
-    }
-    @media (max-width: 767px){
-      .sidebar-toggle{
-    display: none;
-  }
-    }
-    </style>
-  <script>
-    const mapToken ="<%= process.env.MAP_TOKEN %>";
-    const listing = JSON.parse('<%- JSON.stringify(listing) %>');
-  </script>
-  <div class="row mt-3">
-    <div class="col-8 offset-3">
-      <h3><%= listing.title %></h3>
-    </div>
-    <div class="card col-6 offset-3 show-card listing-card">
-      <img
-        src="<%= listing.image.url || listing.image %>"
-        class="card-img-top show-img"
-        alt="listing_image"
-      />
-      <div class="card-body">
-        <p class="card-text">
-          Owned By:
-          <i><%=listing.owner.username%></i>
-        </p>
-        <p class="card-text"><%= listing.description %></p>
-        <p class="card-text">
-          &#8377;<%= listing.price.toLocaleString("en-IN") %>
-        </p>
-        <p class="card-text"><%= listing.country %></p>
-        <p class="card-text"><%= listing.location %></p>
+<div class="container py-4">
+  <!-- Header -->
+  <div class="header-img-wrap">
+    <img src="<%= listing.image.url || listing.image %>" class="header-img w-100" alt="<%= listing.title %>">
+    <div class="header-gradient"></div>
+    <div class="header-content">
+      <h1 class="header-title"><%= listing.title %></h1>
+      <div class="header-location">
+        <i class="fas fa-map-marker-alt me-2"></i>
+        <%= listing.location %>, <%= listing.country %>
       </div>
     </div>
-    <!-- <ul>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-    </ul> -->
-    <br />
   </div>
-  <% if(currUser && currUser._id.equals(listing.owner._id)){%>
-  <div class="btns">
-    <a
-      href="/listings/<%= listing._id %>/edit"
-      class="btn btn-dark col-1 offset-3 edit-btn"
-      >Edit</a
-    >
-    <form method="POST" action="/listings/<%=listing._id%>?_method=DELETE">
-      <button class="btn btn-dark offset-5">Delete</button>
-    </form>
-  </div>
-  <%}%>
-
-  <!-- <br><br> -->
-  
-   
-  <div class="col-8 offset-3 mb-3">
-    <% if(currUser){%>
-      <hr />
-      <h4><i class="fa-regular fa-pen-to-square"></i> &nbsp;Leave a Review</h4>
-    <form
-      action="/listings/<%= listing.id %>/reviews"
-      method="POST"
-      novalidate
-      class="needs-validation"
-    >
-      <!-- <div class="mb-3 mt-3">
-        <label for="rating" class="form-label">Rating</label>
-        <input
-          type="range"
-          min="1"
-          max="5"
-          id="rating"
-          name="review[rating]"
-          class="form-range"
-        />
-      </div> -->
-      <div class="mb-3 mt-3">
-      <fieldset class="starability-slot">
-        <input type="radio" id="no-rate" class="input-no-rate" name="review[rating]" value="1" checked aria-label="No rating." />
-        <input type="radio" id="first-rate1" name="review[rating]" value="1" />
-        <label for="first-rate1" title="Terrible">1 star</label>
-        <input type="radio" id="first-rate2" name="review[rating]" value="2" />
-        <label for="first-rate2" title="Not good">2 stars</label>
-        <input type="radio" id="first-rate3" name="review[rating]" value="3" />
-        <label for="first-rate3" title="Average">3 stars</label>
-        <input type="radio" id="first-rate4" name="review[rating]" value="4" />
-        <label for="first-rate4" title="Very good">4 stars</label>
-        <input type="radio" id="first-rate5" name="review[rating]" value="5" />
-        <label for="first-rate5" title="Amazing">5 stars</label>
-      </fieldset>
-      </div>
-      <div class="mb-3 mt-3">
-        <label for="comment" class="form-label">Comments</label>
-        <textarea
-          name="review[comment]"
-          id="comment"
-          cols="30"
-          rows="5"
-          class="form-control"
-          required
-        ></textarea>
-        <div class="invalid-feedback">Please add some comments for review</div>
-      </div>
-      <button class="btn btn-outline-dark">Submit</button>
-    </form>
-    <hr />
-    <%}%>
-    <p>
-      <!-- <ul>
-        <% for(review of listing.reviews){%>
-            <li><%=review.comment%>,<%=review.rating%> stars</li>
-        <%}%>
-        </ul> -->
-    </p>
-    <% if(listing.reviews.length >0)%><%{%>
-    <div class="row">
-    <p><b>All Reviews</b></p>
-      <% for(review of listing.reviews){%>
-      <div class="card col-7 ms-3 mb-3">
-        <div class="card-body">
-          <h5 class="card-title">@<%=review.author.username%></h5>
-          <p class="starability-result card-text" data-rating=<%= review.rating %>>
-            Rated:<%= review.rating %> stars
-          </p>
-          <p class="card-text"><%= review.comment %></p> 
+  <div class="row g-5">
+    <!-- Main Content -->
+    <div class="col-lg-7">
+      <div class="card card-custom mb-4">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span>Hosted by <strong><%= listing.owner.username %></strong></span>
+            <span class="price-tag">₹<%= listing.price.toLocaleString("en-IN") %> <small class="text-muted">/night</small></span>
+          </div>
+          <p class="mb-0" style="font-size:1.13rem;line-height:1.7;"><%= listing.description %></p>
         </div>
-        <form
-          class="mb-3"
-          method="POST"
-          action="/listings/<%=listing._id%>/reviews/<%= review._id%>?_method=DELETE"
-        >
-        <br>
-          <button class="btn btn-sm btn-dark">Delete</button>
-        </form>
       </div>
-      <%}%>
-    </div>
-    <% }%>
-  </div>
-  <hr class="mt-3 mb-3">
-  <div class="col-8 offset-2 mb-3" id="mapBox">
-    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
-  <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
-    <h3>Where you'll be</h3>
-    <div style=" position: relative; box-shadow: 10px 10px 10px rgba(0,0,0, 0.45);" id="map">
-      <!-- Right Sidebar -->
-      <div id="right" class="sidebar flex-center right collapsed">
-        <div class="sidebar-content rounded-rect flex-center">
-          <%= listing.location  %>
-          <div class="sidebar-toggle rounded-rect right" onclick="toggleSidebar('right')">
-            &larr;
+      <!-- Map Section -->
+      <div class="mb-4">
+        <h4 class="mb-3">Location</h4>
+        <% if (typeof mapToken === 'string' && mapToken.trim().length > 0) { %>
+          <div class="card card-custom mb-4 p-0" style="box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1.5px solid #e3e8ee;">
+            <div class="card-body p-0">
+              <div id="map" style="height:320px; width:100%; max-width:100%; border-radius: 1rem; border: 1.5px solid #e9ecef; background: #fff;"></div>
+            </div>
+          </div>
+        <% } else { %>
+          <div class="card card-custom mb-4 p-0" style="box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1.5px solid #e3e8ee;">
+            <div class="card-body d-flex align-items-center justify-content-center" style="height:320px;">
+              <div class="text-center w-100">
+                <div class="mb-2" style="font-size:2.2rem;color:#ffc107;"><i class="fas fa-map-marked-alt"></i></div>
+                <h5 class="text-warning">Map temporarily unavailable</h5>
+                <div class="text-dark">Map configuration error - token not available</div>
+                <small class="text-muted">Contact the site administrator to resolve this issue.</small>
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+      <!-- Reviews Section -->
+      <div class="mb-4">
+        <h4 class="mb-3"><i class="fas fa-star text-warning me-2"></i>Reviews <small class="text-muted">(<%= listing.reviews.length %>)</small></h4>
+        <% if(currUser){ %>
+        <div class="card card-custom mb-4" style="background: #f8fafc; border: 1.5px solid #e3e8ee; box-shadow: 0 2px 12px rgba(0,0,0,0.06); width:100%;">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+              <span class="review-avatar me-3" style="background:#e0e7ef; color:#4a5568; font-weight:700; font-size:1.2rem; display:flex; align-items:center; justify-content:center;">
+                <%= currUser.username ? currUser.username.charAt(0).toUpperCase() : '?' %>
+              </span>
+              <div>
+                <div class="fw-semibold">@<%= currUser.username %></div>
+                <div class="text-muted small">Share your experience</div>
+              </div>
+            </div>
+            <h5 class="mb-3">Write a Review</h5>
+            <form action="/listings/<%= listing.id %>/reviews" method="POST" class="needs-validation" novalidate>
+              <div class="mb-3">
+                <label class="form-label mb-2">Your Rating</label>
+                <div class="d-flex align-items-center gap-2 mb-1" id="star-bar">
+                  <% for(let i=1;i<=5;i++){ %>
+                    <input type="radio" class="btn-check" name="review[rating]" id="star-<%=i%>" value="<%=i%>" <%= i===1 ? 'checked' : '' %>>
+                    <label class="btn btn-sm px-2 py-1" for="star-<%=i%>" style="font-size:1.5rem; color:#ffc107; background:transparent; border:none;">
+                      <i class="fa<%= i <= 1 ? 's' : 'r' %> fa-star"></i>
+                    </label>
+                  <% } %>
+                  <span id="star-label" class="ms-2 text-muted small">1/5</span>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="comment" class="form-label">Your Review</label>
+                <textarea name="review[comment]" id="comment" class="form-control" rows="4" style="border-radius:0.75rem; background:#f4f6fa;" required></textarea>
+                <div class="invalid-feedback">Please share your experience.</div>
+              </div>
+              <button type="submit" class="btn btn-primary w-100 py-2" style="font-weight:600;">
+                <i class="fas fa-paper-plane me-2"></i>Submit Review
+              </button>
+            </form>
           </div>
         </div>
+        <script>
+        // Interactive star bar
+        const starInputs = document.querySelectorAll('input[name="review[rating]"]');
+        const starLabels = document.querySelectorAll('#star-bar label i');
+        const starLabel = document.getElementById('star-label');
+        starInputs.forEach((input, idx) => {
+          input.addEventListener('change', function() {
+            starLabels.forEach((icon, i) => {
+              icon.className = i < idx+1 ? 'fas fa-star' : 'far fa-star';
+            });
+            starLabel.textContent = `${idx+1}/5`;
+          });
+        });
+        </script>
+        <% } %>
+        <% if(listing.reviews.length > 0) { %>
+          <div class="row g-4">
+            <% for(review of listing.reviews){ %>
+              <div class="col-md-6">
+                <div class="card review-card position-relative" style="background: #f7fafd; border: 1.5px solid #e3e8ee; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+                  <% if(currUser && currUser._id && typeof currUser._id.equals === 'function' && currUser._id.equals(review.author._id)){ %>
+                  <form method="POST" action="/listings/<%=listing._id%>/reviews/<%= review._id%>?_method=DELETE" class="position-absolute end-0 top-0 m-2">
+                    <button class="btn btn-light btn-sm border-0" title="Delete Review" style="color:#dc3545;">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </form>
+                  <% } %>
+                  <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center mb-2">
+                      <span class="review-avatar me-3" style="background:#e0e7ef; color:#4a5568; font-weight:700; font-size:1.2rem; display:flex; align-items:center; justify-content:center;">
+                        <%= review.author.username ? review.author.username.charAt(0).toUpperCase() : '?' %>
+                      </span>
+                      <div>
+                        <div class="fw-semibold">@<%=review.author.username%></div>
+                        <div class="text-muted small">
+                          <i class="far fa-clock me-1"></i>
+                          <%= review.createdAt ? new Date(review.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) : '' %>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="mb-2">
+                      <span class="text-warning" style="font-size:1.15rem;">
+                        <% for(let i=0;i<review.rating;i++){ %>
+                          <i class="fas fa-star"></i>
+                        <% } %>
+                        <% for(let i=review.rating;i<5;i++){ %>
+                          <i class="far fa-star"></i>
+                        <% } %>
+                      </span>
+                      <span class="ms-2 text-dark fw-semibold">Rated: <%= review.rating %> / 5</span>
+                    </div>
+                    <div class="mb-2 text-secondary fst-italic" style="font-size:1.13rem; line-height:1.7;">“<%= review.comment %>”</div>
+                  </div>
+                </div>
+              </div>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+    <!-- Reservation Sidebar -->
+    <div class="col-lg-5">
+      <div class="card card-custom sticky-sidebar" style="background:#f9fafc;">
+        <div class="card-body p-4">
+          <h4 class="mb-4">Book Your Stay</h4>
+          <% if(currUser) { %>
+          <form id="reservation-form">
+            <input type="hidden" id="listingId" name="listingId" value="<%= listing._id %>">
+            <div class="mb-3">
+              <label for="checkIn" class="form-label">Check-in Date</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                <input type="date" class="form-control" id="checkIn" name="checkIn" required min="<%= new Date().toISOString().split('T')[0] %>">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="checkOut" class="form-label">Check-out Date</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                <input type="date" class="form-control" id="checkOut" name="checkOut" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="numberOfGuests" class="form-label">Number of Guests</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-users"></i></span>
+                <input type="number" class="form-control" id="numberOfGuests" name="numberOfGuests" min="1" value="1" required>
+              </div>
+            </div>
+            <div class="card bg-light mb-3">
+              <div class="card-body">
+                <h6 id="price-per-night" class="mb-2" data-price="<%= listing.price %>">
+                  <i class="fas fa-tag me-2"></i>Price per night: ₹<%= listing.price %>
+                </h6>
+                <h6 id="subtotal" class="mb-2">Subtotal: ₹0</h6>
+                <h6 id="taxes" class="mb-2">Taxes (18%): ₹0</h6>
+                <hr>
+                <h5 id="totalPrice" class="fw-bold mb-0">Total: ₹0</h5>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-success w-100 py-2" id="rzp-button">
+              <i class="fas fa-lock me-2"></i>Reserve Now
+            </button>
+          </form>
+          <% } else { %>
+          <div class="alert alert-info text-center">
+            <i class="fas fa-info-circle me-2"></i>
+            Please <a href="/login" class="alert-link" onclick="sessionStorage.setItem('redirectUrl', window.location.pathname)">login</a> to make a reservation.
+          </div>
+          <% } %>
+        </div>
       </div>
     </div>
   </div>
-  
-  
-        <!-- <div class="col-8 offset-2 mb-3"> -->
-  <!-- <div class="col-8 offset-3 mb-3">
-    <h3>where you'll be in</h3>
-    <div id="map"></div>
-  </div> -->
- <script src="/js/map.js"></script>
+</div>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.css" rel="stylesheet">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<% if (typeof mapToken === 'string' && mapToken.trim().length > 0) { %>
+  <script>
+    window.mapToken = "<%- mapToken %>";
+  </script>
+<% } %>
+<% if (listing && listing.geometry && Array.isArray(listing.geometry.coordinates)) { %>
+  <script>
+    window.listing = {
+      geometry: {
+        coordinates: <%- JSON.stringify(listing.geometry.coordinates) %>
+      },
+      location: "<%- listing.location %>"
+    };
+  </script>
+<% } %>
+<script src="/js/map.js" defer></script>
+<script>
+    function calculateTotal() {
+        const checkIn = new Date(document.getElementById('checkIn').value);
+        const checkOut = new Date(document.getElementById('checkOut').value);
+        if (checkIn && checkOut) {
+            const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+            const pricePerNight = Number(document.getElementById('price-per-night').dataset.price);
+            const subtotal = nights * pricePerNight;
+            const taxRate = 0.18;
+            const taxAmount = subtotal * taxRate;
+            const total = subtotal + taxAmount;
+            document.getElementById('subtotal').textContent = `Subtotal: ₹${subtotal.toFixed(2)}`;
+            document.getElementById('taxes').textContent = `Taxes (18%): ₹${taxAmount.toFixed(2)}`;
+            document.getElementById('totalPrice').textContent = `Total Price (including taxes): ₹${total.toFixed(2)}`;
+            document.getElementById('totalPrice').dataset.total = total;
+        }
+    }
+    function validateDates() {
+        const checkIn = new Date(document.getElementById('checkIn').value);
+        const checkOut = new Date(document.getElementById('checkOut').value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (checkIn < today) {
+            alert('Check-in date cannot be in the past');
+            return false;
+        }
+        if (checkOut <= checkIn) {
+            alert('Check-out date must be after check-in date');
+            return false;
+        }
+        return true;
+    }
+    document.getElementById('reservation-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!validateDates()) {
+            return;
+        }
+        const submitButton = e.target.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.textContent = 'Processing...';
+        try {
+            const formData = {
+                listingId: document.getElementById('listingId').value,
+                checkIn: document.getElementById('checkIn').value,
+                checkOut: document.getElementById('checkOut').value,
+                numberOfGuests: parseInt(document.getElementById('numberOfGuests').value) || 1,
+                totalPrice: parseFloat(document.getElementById('totalPrice').dataset.total)
+            };
+            if (!formData.listingId || !formData.checkIn || !formData.checkOut || !formData.numberOfGuests) {
+                throw new Error('Please fill in all required fields');
+            }
+            const response = await fetch('/reservations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || data.details || 'Failed to create reservation');
+            }
+            const options = {
+                key: 'rzp_test_gi3G6jtIqXNtxv',
+                amount: data.amount,
+                currency: "INR",
+                name: "FortuneVila",
+                description: "Reservation Payment",
+                order_id: data.orderId,
+                handler: async function (response) {
+                    try {
+                        const verifyResponse = await fetch('/reservations/verify-payment', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                                reservationId: data.reservationId
+                            })
+                        });
+                        const verifyData = await verifyResponse.json();
+                        if (verifyData.success) {
+                            window.location.href = `/reservations/success?reservationId=${data.reservationId}`;
+                        } else {
+                            throw new Error('Payment verification failed');
+                        }
+                    } catch (error) {
+                        console.error('Payment verification error:', error);
+                        alert('Payment verification failed. Please contact support.');
+                    }
+                },
+                prefill: {
+                    name: '<%= currUser ? currUser.username : "" %>',
+                    email: '<%= currUser ? currUser.email : "" %>'
+                },
+                theme: {
+                    color: "#28a745"
+                }
+            };
+            const rzp1 = new Razorpay(options);
+            rzp1.open();
+            rzp1.on('payment.failed', function (response){
+                alert(response.error.description);
+                window.location.href = `/reservations/failed?reservationId=${data.reservationId}`;
+            });
+        } catch (error) {
+            console.error('Reservation error:', error);
+            alert(error.message || 'Failed to create reservation');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Reserve Now';
+        }
+    });
+    document.getElementById('checkIn').addEventListener('change', calculateTotal);
+    document.getElementById('checkOut').addEventListener('change', calculateTotal);
+</script>
 </body>
-<!-- </html> -->

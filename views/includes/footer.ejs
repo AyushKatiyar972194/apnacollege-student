@@ -12,58 +12,112 @@
     </div>
 </div>
 </footer> -->
+<style>
+.site-footer {
+  background: #23242a;
+  color: #e0e0e0;
+  padding: 18px 0 10px 0;
+  font-size: 1rem;
+  border-top: 1px solid #2d2e34;
+  position: relative;
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  box-sizing: border-box;
+  bottom: 0;
+}
+.site-footer .container {
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.site-footer .footer-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+.site-footer .footer-brand {
+  font-weight: 600;
+  color: #fff;
+  font-size: 1.1rem;
+}
+.site-footer .footer-links {
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  gap: 1.2rem;
+  margin-bottom: 0;
+}
+.site-footer .footer-links a {
+  color: #b0b0b0;
+  font-size: 0.97rem;
+  text-decoration: none;
+}
+.site-footer .footer-links a:hover {
+  color: #fe424d;
+  text-decoration: underline;
+}
+.site-footer .footer-socials {
+  display: flex;
+  gap: 0.7rem;
+}
+.site-footer .footer-socials a {
+  color: #fff;
+  background: #3a3b41;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition: background 0.13s, color 0.13s;
+}
+.site-footer .footer-socials a:hover {
+  background: #fe424d;
+  color: #fff;
+}
+.site-footer .copyright-text {
+  color: #b0b0b0;
+  font-size: 0.97rem;
+  margin: 0.5rem 0 0 0;
+  text-align: center;
+}
+@media (max-width: 767px) {
+  .site-footer .footer-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.7rem;
+  }
+  .site-footer .footer-socials {
+    margin-top: 0.5rem;
+  }
+}
+</style>
 <footer class="site-footer mt-4">
-    <div class="container">
-      <div class="row">
-        <div class="col-sm-12 col-md-6">
-          <h6>About</h6>
-          <p><b>FortuneVila Private Limited</b><br>
-            Discover your perfect getaway with FortuneVila Private Limited, your trusted partner in finding unique and comfortable accommodations. Whether you’re planning a weekend retreat, a family vacation, or a business trip, we offer a diverse range of properties to suit every need and budget.
-            <br><b>Our Mission </b>
-                Our mission is to connect travelers with exceptional stays that provide comfort, convenience, and unforgettable experiences. We strive to make every trip special by offering personalized service and a wide selection of high-quality accommodations.</p>
-            
-        </div>
-  
-        <div class="col-xs-6 col-md-3">
-          <h6>24/7 Support</h6>
-          <ul class="footer-links">
-            <li><a href="#">Help Centre</a></li>
-            <li><a href="#">AirCover</a></li>
-            <li><a href="#">Disability support</a></li>
-            <li><a href="#">Cancellation options</a></li>
-            <li><a href="#">Anti-discrimination</a></li>
-            <li><a href="#">Report neighbourhood concerns</a></li>
-          </ul>
-        </div>
-  
-        <div class="col-xs-6 col-md-3">
-          <h6>Our Services</h6>
-          <ul class="footer-links">
-            <li><a href="#">Host your home</a></li>
-            <li><a href="#">AirCover for Hosts</a></li>
-            <li><a href="#">Easy Booking</a></li>
-            <li><a href="#">Community forum</a></li>
-            <li><a href="#">Verified Listings</a></li>
-          </ul>
-        </div>
-      </div>
-      <hr>
-    </div>
-    <div class="container">
-      <div class="row">
-        <div class="col-md-8 col-sm-6 col-xs-12">
-          <p class="copyright-text">Copyright &copy; 2023 All Rights Reserved by 
-       <a href="#">Ayush Katiyar</a>.
-          </p>
-        </div>
-  
-        <div class="col-md-4 col-sm-6 col-xs-12">
-          <ul class="social-icons">
-            <li><a class="facebook" href="#"><i class="fa-brands fa-square-facebook"></i></a></li>
-            <li><a class="twitter" href="#"><i class="fa-brands fa-instagram"></i></a></li>
-            <li><a class="linkedin" href="#"><i class="fa-brands fa-linkedin"></i></a></li>   
-          </ul>
-        </div>
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-brand">&copy; FortuneVila Private Limited</div>
+      <ul class="footer-links">
+        <li><a href="#">Privacy</a></li>
+        <li><a href="#">Terms</a></li>
+      </ul>
+      <div class="footer-socials">
+        <a href="#"><i class="fa-brands fa-square-facebook"></i></a>
+        <a href="#"><i class="fa-brands fa-instagram"></i></a>
+        <a href="#"><i class="fa-brands fa-linkedin"></i></a>
       </div>
     </div>
-  </footer>
+    <div class="copyright-text">
+      Copyright &copy; 2023 All Rights Reserved by <a href="#">Ayush Katiyar</a>.
+    </div>
+  </div>
+</footer>
+</body>
+</html>

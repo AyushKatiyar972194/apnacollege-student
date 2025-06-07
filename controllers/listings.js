@@ -2,6 +2,7 @@ const { query } = require("express");
 const Listing = require("../models/listing.js");
 const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
 const mapToken = process.env.MAP_TOKEN;
+console.log("Mapbox Token:", mapToken ? "Token exists" : "Token is missing");
 const geocodingClient = mbxGeocoding({ accessToken: mapToken });
 async function index(req, res) {
   const allListings = await Listing.find({});
@@ -13,73 +14,91 @@ function renderNewForm(req, res) {
 }
 
 async function showListings(req, res) {
-  let { id } = req.params;
-  const listing = await Listing.findById(id)
-    .populate({
-      path: "reviews",
-      populate: {
-        path: "author",
-      },
-    })
-    .populate("owner");
-  if (!listing) {
-    req.flash("error", "Listing you requested does not exist!");
+  try {
+    let { id } = req.params;
+    const listing = await Listing.findById(id)
+      .populate({
+        path: "reviews",
+        populate: {
+          path: "author",
+        },
+      })
+      .populate("owner");
+
+    if (!listing) {
+      req.flash("error", "Listing you requested does not exist!");
+      return res.redirect("/listings");
+    }
+
+    // Ensure mapToken is available
+    const mapToken = process.env.MAP_TOKEN;
+    if (!mapToken) {
+      console.error("MAP_TOKEN environment variable is not defined");
+      req.flash("error", "Map configuration error");
+      return res.redirect("/listings");
+    }
+
+    // Validate geometry data
+    if (!listing.geometry || !listing.geometry.coordinates || !Array.isArray(listing.geometry.coordinates)) {
+      console.error("Invalid geometry data for listing:", id);
+      // Set default coordinates (you can adjust these as needed)
+      listing.geometry = {
+        type: "Point",
+        coordinates: [80.9462, 26.8467] // Default coordinates for Lucknow
+      };
+    }
+
+    res.render("listings/show.ejs", { listing, mapToken });
+  } catch (error) {
+    console.error("Error showing listing:", error);
+    req.flash("error", "Error loading listing");
     res.redirect("/listings");
   }
-  res.render("listings/show.ejs", { listing });
 }
 
 async function createListings(req, res, next) {
-  let response = await geocodingClient
-  .forwardGeocode({
-    query:req.body.listing.location,
-    limit:1,
-  })
-  .send();
-  // console.log(response.body.features[0].geometry);
-  // res.send("done!");
+  try {
+    // Geocode the location
+    let response = await geocodingClient
+      .forwardGeocode({
+        query: req.body.listing.location,
+        limit: 1,
+      })
+      .send();
 
-  let url = req.file.path;
-  let filename = req.file.filename;
- 
-  // console.log(url,"..",filename);
-  // let result = listingSchema.validate(req.body);
-  // console.log(result);
-  // if(result.error){
-  //     throw new ExpressError(400,result.error);
-  // }
-  // if(!req.body.listing){
-  //     throw new ExpressError(400,"Send valid data for listing");
-  // };
-  // try{
-  const newListing = new Listing(req.body.listing);
-  // if(!newListing.title){
-  //     throw new ExpressError(400,"Title is missing");
-  // }
-  // if(!newListing.description){
-  //     throw new ExpressError(400,"Description is missing");
-  // }
-  // if(!newListing.location){
-  //     throw new ExpressError(400,"Location is missing");
-  // }
-  newListing.owner = req.user._id;
-  newListing.image = {url,filename};
-  newListing.geometry = response.body.features[0].geometry;
-  let savedListing =await newListing.save();
-  console.log(savedListing);
-  await newListing.save();
-  req.flash("success", "New Listing Created!");
+    // Validate geocoding response
+    if (!response.body.features.length) {
+      req.flash("error", "Could not find coordinates for the specified location");
+      return res.redirect("/listings/new");
+    }
 
-  // console.log(listing);
-  res.redirect("/listings");
-  // } catch(err){
-  //     next(err);
-  // }
-  // let {title, description, image, price, country, location}=req.body;
-  // let listing = req.body.listing;
-  // new Listing(listing);
-  //                 ||
-  // new Listing(req.body.listing);
+    // Get image data
+    let url = req.file.path;
+    let filename = req.file.filename;
+
+    // Create new listing
+    const newListing = new Listing(req.body.listing);
+    newListing.owner = req.user._id;
+    newListing.image = { url, filename };
+
+    // Set geometry data
+    const [lng, lat] = response.body.features[0].geometry.coordinates;
+    newListing.geometry = {
+      type: "Point",
+      coordinates: [lng, lat]
+    };
+
+    // Save listing
+    await newListing.save();
+    console.log("Created listing with geometry:", newListing.geometry);
+    
+    req.flash("success", "New Listing Created!");
+    res.redirect("/listings");
+  } catch (err) {
+    console.error("Error creating listing:", err);
+    req.flash("error", "Error creating listing");
+    res.redirect("/listings/new");
+  }
 }
 
 async function renderEditForm(req, res) {

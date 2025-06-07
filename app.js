@@ -18,18 +18,22 @@ const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
 const listingRouter = require("./routes/listing.js");
 const reviewRouter = require("./routes/review.js");
 const userRouter = require("./routes/user.js");
+const reservationRouter = require("./routes/reservation.js");
 const { options } = require("joi");
 
 
 app.use(express.urlencoded({extended: true}));
+app.use(express.json());
 app.use(methodOverride("_method"));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "/views"));
 app.engine("ejs", engine);
+
 app.use(express.static(path.join(__dirname,"/public")));
 
 // const MONGO_URL ="mongodb://127.0.0.1:27017/fortunevila";
@@ -71,16 +75,17 @@ const store = MongoStore.create({
     touchAfter:24 * 3600,
 });
 
-const sessionOptions ={
+const sessionOptions = {
     store,
-    secret:process.env.SECRET,
-    resave:false,
-    saveUninitialized:true,
-    cookie:{
-        expires:Date.now()+1000*60*60*24*7,
-        maxAge:1000*60*60*24*7,
-        httponly:true
-    },
+    secret: process.env.SECRET,
+    resave: true,
+    saveUninitialized: true,
+    cookie: {
+        expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production'
+    }
 };
 
 // app.get("/",(req,res)=>{
@@ -90,17 +95,40 @@ const sessionOptions ={
 app.use(session(sessionOptions));
 app.use(flash());
 
+// Initialize passport and restore authentication state from session
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Configure passport
 passport.use(new LocalStrategy(User.authenticate()));
 
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
+// Google OAuth Strategy
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: "/auth/google/callback"
+  },
+  function(accessToken, refreshToken, profile, done) {
+    // For now, just pass the profile as the user object
+    return done(null, profile);
+  }
+));
 
-app.use((req,res,next)=>{
+passport.serializeUser(function(user, done) {
+  // For Google, serialize the whole profile
+  done(null, user);
+});
+passport.deserializeUser(function(obj, done) {
+  done(null, obj);
+});
+
+// Make user available to all templates
+app.use((req, res, next) => {
     res.locals.success = req.flash("success");
     res.locals.error = req.flash("error");
     res.locals.currUser = req.user;
+    // Add this line to ensure user is available in all requests
+    req.user = req.user || null;
     next();
 });
 
@@ -114,21 +142,52 @@ app.use((req,res,next)=>{
 //     res.send(registeredUser);
 // });
 
+// Google Auth Routes
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
 
-app.use("/listings", listingRouter);
-app.use("/listings/:id/reviews",reviewRouter)
-app.use("/",userRouter);
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login', failureFlash: true }),
+  function(req, res) {
+    // Successful authentication, redirect to listings.
+    res.redirect('/listings');
+  }
+);
 
-app.all("*",(req,res,next)=>{
-    next(new ExpressError(404,"Page Not Found!"));
+app.get('/logout', (req, res, next) => {
+  req.logout(function(err) {
+    if (err) { return next(err); }
+    res.redirect('/listings');
+  });
 });
 
-app.use((err,req,res,next)=>{
-    let{statusCode=500,message="something went wrong!"}=err;
-    res.status(statusCode).render("listings/error.ejs",{message});
-    //err
-    // res.status(statusCode).send(message);
-    // res.send("something went wrong");
+// Mount routes in the correct order
+console.log('Mounting routes...');
+
+app.use("/listings", listingRouter);
+console.log('Listings router mounted');
+
+app.use("/listings/:id/reviews", reviewRouter);
+console.log('Reviews router mounted');
+
+app.use("/reservations", reservationRouter);
+console.log('Reservations router mounted');
+
+app.use("/", userRouter);
+console.log('User router mounted');
+
+// Catch-all route for 404s - must be after all other routes
+app.all("*", (req, res, next) => {
+    console.log('404 route hit:', req.method, req.originalUrl);
+    next(new ExpressError(404, "Page Not Found!"));
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.log('Error middleware hit:', err);
+    let { statusCode = 500, message = "something went wrong!" } = err;
+    res.status(statusCode).render("listings/error.ejs", { message });
 });
 
 app.listen(8080,()=>{

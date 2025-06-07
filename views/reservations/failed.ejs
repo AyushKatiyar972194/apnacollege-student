@@ -1,0 +1,32 @@
+<%- include('../includes/header') %>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h3>Booking Failed</h3>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-times-circle text-danger" style="font-size: 4rem;"></i>
+                    </div>
+                    <h4 class="text-center mb-4">We couldn't process your booking</h4>
+                    
+                    <div class="alert alert-danger">
+                        <p class="mb-0">
+                            There was an error processing your payment. Please try again or contact our support team if the problem persists.
+                        </p>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <a href="/listings" class="btn btn-primary">Try Again</a>
+                        <a href="/contact" class="btn btn-outline-primary ms-2">Contact Support</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../includes/footer') %> 
