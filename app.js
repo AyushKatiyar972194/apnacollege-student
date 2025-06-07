@@ -78,20 +78,20 @@ const store = MongoStore.create({
 const sessionOptions = {
     store,
     secret: process.env.SECRET,
-    resave: true,
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: false,
     cookie: {
-        expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
-        maxAge: 1000 * 60 * 60 * 24 * 7,
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production'
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax' // good default for cross-site login (e.g., Google)
     }
 };
 
 // app.get("/",(req,res)=>{
 //     res.redirect("/listings");
 // });
-
+app.set('trust proxy', 1); // Trust Render’s proxy
 app.use(session(sessionOptions));
 app.use(flash());
 
