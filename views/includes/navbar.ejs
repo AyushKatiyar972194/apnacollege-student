@@ -107,7 +107,7 @@
             <%= currUser.displayName || currUser.username || (currUser.name ? `${currUser.name.givenName || ''} ${currUser.name.familyName || ''}`.trim() : 'User') %>
           </a>
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="/reservations">My Reservations</a></li>
+            <li><a class="dropdown-item" href="/reservations/my-reservations">My Reservations</a></li>
             <li><hr class="dropdown-divider"></li>
             <li>
               <form action="/logout" method="POST" class="d-inline">
