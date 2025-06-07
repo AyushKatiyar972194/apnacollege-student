@@ -5,65 +5,86 @@ const Listing = require("../models/listing");
 const User = require("../models/user");
 const moment = require("moment");
 
-// Helper function to get or create user from Google OAuth data
-async function getOrCreateUser(oauthUser) {
-    if (!oauthUser || !oauthUser.emails || !oauthUser.emails[0]) {
-        throw new Error('Invalid OAuth user data');
+// Helper function to get or create user from Google OAuth data or regular user
+async function getOrCreateUser(user) {
+    try {
+        // If it's a regular user from the session
+        if (user._id) {
+            const dbUser = await User.findById(user._id);
+            if (!dbUser) {
+                throw new Error('User not found in database');
+            }
+            return dbUser;
+        }
+
+        // If it's a Google OAuth user
+        if (user.emails && user.emails[0]) {
+            const email = user.emails[0].value;
+            let dbUser = await User.findOne({ 
+                $or: [
+                    { email: email },
+                    { googleId: user.id }
+                ]
+            });
+
+            if (!dbUser) {
+                // Parse name from Google profile
+                const name = {
+                    givenName: user.name?.givenName || user.displayName?.split(' ')[0] || null,
+                    familyName: user.name?.familyName || user.displayName?.split(' ').slice(1).join(' ') || null
+                };
+
+                dbUser = new User({
+                    email: email,
+                    googleId: user.id,
+                    name: name,
+                    username: user.displayName || email.split('@')[0],
+                    isVerified: true // Google OAuth users are pre-verified
+                });
+                await dbUser.save();
+                console.log('Created new user for Google OAuth:', { 
+                    userId: dbUser._id, 
+                    email: dbUser.email,
+                    name: dbUser.name,
+                    username: dbUser.username,
+                    googleId: dbUser.googleId
+                });
+            } else {
+                // Update existing user with Google ID if not set
+                dbUser.googleId = user.id;
+                if (!dbUser.name.givenName && user.name?.givenName) {
+                    dbUser.name.givenName = user.name.givenName;
+                }
+                if (!dbUser.name.familyName && user.name?.familyName) {
+                    dbUser.name.familyName = user.name.familyName;
+                }
+                if (!dbUser.username && user.displayName) {
+                    dbUser.username = user.displayName;
+                }
+                await dbUser.save();
+                console.log('Updated existing user with Google data:', {
+                    userId: dbUser._id,
+                    email: dbUser.email,
+                    name: dbUser.name,
+                    username: dbUser.username,
+                    googleId: dbUser.googleId
+                });
+            }
+            return dbUser;
+        }
+
+        throw new Error('Invalid user data');
+    } catch (error) {
+        console.error('Error in getOrCreateUser:', {
+            error: error.message,
+            user: user ? {
+                id: user.id || user._id,
+                email: user.email || user.emails?.[0]?.value,
+                name: user.name || user.displayName
+            } : 'no user data'
+        });
+        throw error;
     }
-
-    const email = oauthUser.emails[0].value;
-    let dbUser = await User.findOne({ 
-        $or: [
-            { email: email },
-            { googleId: oauthUser.id }
-        ]
-    });
-
-    if (!dbUser) {
-        // Parse name from Google profile
-        const name = {
-            givenName: oauthUser.name?.givenName || oauthUser.displayName?.split(' ')[0] || null,
-            familyName: oauthUser.name?.familyName || oauthUser.displayName?.split(' ').slice(1).join(' ') || null
-        };
-
-        dbUser = new User({
-            email: email,
-            googleId: oauthUser.id,
-            name: name,
-            username: oauthUser.displayName || email.split('@')[0],
-            isVerified: true // Google OAuth users are pre-verified
-        });
-        await dbUser.save();
-        console.log('Created new user for Google OAuth:', { 
-            userId: dbUser._id, 
-            email: dbUser.email,
-            name: dbUser.name,
-            username: dbUser.username,
-            googleId: dbUser.googleId
-        });
-    } else if (!dbUser.googleId && oauthUser.id) {
-        // Update existing user with Google ID if not set
-        dbUser.googleId = oauthUser.id;
-        if (!dbUser.name.givenName && oauthUser.name?.givenName) {
-            dbUser.name.givenName = oauthUser.name.givenName;
-        }
-        if (!dbUser.name.familyName && oauthUser.name?.familyName) {
-            dbUser.name.familyName = oauthUser.name.familyName;
-        }
-        if (!dbUser.username && oauthUser.displayName) {
-            dbUser.username = oauthUser.displayName;
-        }
-        await dbUser.save();
-        console.log('Updated existing user with Google data:', {
-            userId: dbUser._id,
-            email: dbUser.email,
-            name: dbUser.name,
-            username: dbUser.username,
-            googleId: dbUser.googleId
-        });
-    }
-
-    return dbUser;
 }
 
 // Initialize Razorpay with environment variables
