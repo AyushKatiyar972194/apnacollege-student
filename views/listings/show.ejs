@@ -124,7 +124,37 @@ body {
       <div class="card card-custom mb-4">
         <div class="card-body p-4">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <span>Hosted by <strong><%= listing.owner.username %></strong></span>
+            <span>Hosted by <strong>
+              <% if (listing.owner) { 
+                let displayName = listing.owner.displayName;
+                if (!displayName && listing.owner.name) {
+                  let givenName = listing.owner.name.givenName || '';
+                  let familyName = listing.owner.name.familyName || '';
+                  displayName = `${givenName} ${familyName}`.trim() || listing.owner.username;
+                }
+                displayName = displayName || listing.owner.username || 'Host';
+              %>
+                <%= displayName %>
+              <% } else { %>
+                Unknown Host
+              <% } %>
+            </strong></span>
+            <% 
+            let currentUserId = null;
+            if(currUser && currUser._id) {
+                currentUserId = currUser._id.toString();
+            }
+            let ownerId = listing.owner?._id?.toString();
+            if(currentUserId && ownerId && currentUserId === ownerId) { %>
+                <div class="btn-group">
+                    <a href="/listings/<%= listing._id %>/edit" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteListing('<%= listing._id %>')">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            <% } %>
             <span class="price-tag">₹<%= listing.price.toLocaleString("en-IN") %> <small class="text-muted">/night</small></span>
           </div>
           <p class="mb-0" style="font-size:1.13rem;line-height:1.7;"><%= listing.description %></p>
@@ -243,7 +273,14 @@ body {
                       </span>
                       <span class="ms-2 text-dark fw-semibold">Rated: <%= review.rating %> / 5</span>
                     </div>
-                    <div class="mb-2 text-secondary fst-italic" style="font-size:1.13rem; line-height:1.7;">“<%= review.comment %>”</div>
+                    <div class="mb-2 text-secondary fst-italic" style="font-size:1.13rem; line-height:1.7;">"
+                      <% for(let i=0;i<review.rating;i++){ %>
+                        <i class="fas fa-star"></i>
+                      <% } %>
+                      <% for(let i=review.rating;i<5;i++){ %>
+                        <i class="far fa-star"></i>
+                      <% } %>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -446,5 +483,31 @@ body {
     });
     document.getElementById('checkIn').addEventListener('change', calculateTotal);
     document.getElementById('checkOut').addEventListener('change', calculateTotal);
+</script>
+<script>
+async function deleteListing(listingId) {
+    if(confirm('Are you sure you want to delete this listing? This action cannot be undone.')) {
+        try {
+            const response = await fetch(`/listings/${listingId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin' // Include cookies in the request
+            });
+            
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to delete listing');
+            }
+            
+            window.location.href = '/listings';
+        } catch(error) {
+            console.error('Error:', error);
+            alert(error.message || 'Failed to delete listing');
+        }
+    }
+}
 </script>
 </body>

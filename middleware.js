@@ -45,17 +45,60 @@ module.exports.saveRedirectUrl = (req, res, next) => {
     next();
 };
 
-module.exports.isOwner = async (req,res, next)=>{
-    let { id } = req.params;
-    let listing = await Listing.findById(id);
-    if(!listing.owner.equals(res.locals.currUser._id)){
-        req.flash("error","You are not the owner of this listing");
-    return  res.redirect(`/listings/${id}`);
-    }
-    next()
- };
+module.exports.isOwner = async (req, res, next) => {
+    try {
+        let { id } = req.params;
+        let listing = await Listing.findById(id).populate('owner');
+        
+        if (!listing) {
+            req.flash("error", "Listing not found");
+            return res.redirect("/listings");
+        }
 
- module.exports.validateListing = async (req,res, next)=>{
+        // Get the current user's ID and ensure it's a string
+        const currentUserId = req.user._id ? req.user._id.toString() : null;
+        
+        if (!currentUserId) {
+            if (req.xhr || req.headers.accept?.includes('application/json')) {
+                return res.status(401).json({
+                    success: false,
+                    error: "Authentication required"
+                });
+            }
+            req.flash("error", "You must be logged in to perform this action");
+            return res.redirect("/login");
+        }
+
+        // Ensure listing owner ID is a string for comparison
+        const ownerId = listing.owner?._id?.toString();
+        
+        // Check if the user owns the listing
+        if (!ownerId || ownerId !== currentUserId) {
+            if (req.xhr || req.headers.accept?.includes('application/json')) {
+                return res.status(403).json({
+                    success: false,
+                    error: "You don't have permission to perform this action"
+                });
+            }
+            req.flash("error", "You don't have permission to perform this action");
+            return res.redirect(`/listings/${id}`);
+        }
+        
+        next();
+    } catch (error) {
+        console.error('Error in isOwner middleware:', error);
+        if (req.xhr || req.headers.accept?.includes('application/json')) {
+            return res.status(500).json({
+                success: false,
+                error: "An error occurred while checking ownership"
+            });
+        }
+        req.flash("error", "An error occurred while checking ownership");
+        res.redirect("/listings");
+    }
+};
+
+module.exports.validateListing = async (req,res, next)=>{
 //  const validateListing = (req, res, next) => {
     let { error } = listingSchema.validate(req.body);
     if (error) {

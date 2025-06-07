@@ -106,15 +106,6 @@ function login(req, res) {
   console.log('Login controller - Is authenticated:', req.isAuthenticated());
   console.log('Login controller - Session:', req.session);
   
-  // Ensure the user is properly set in the session
-  req.session.user = req.user;
-  req.session.save((err) => {
-    if (err) {
-      console.error('Error saving session:', err);
-    }
-    console.log('Session saved with user:', req.session.user);
-  });
-  
   req.flash("success", "Welcome back to FortuneVila!");
   const redirectUrl = res.locals.redirectUrl || "/listings";
   console.log('Redirecting to:', redirectUrl);

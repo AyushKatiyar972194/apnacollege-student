@@ -117,22 +117,37 @@ async function renderEditForm(req, res) {
 }
 
 async function updateListings(req, res) {
-  let { id } = req.params;
-  // let listing = Listing.findById(id);
-  // if(!listing.owner.equals(res.locals.currUser._id)){
-  //     req.flash("error","You don't have permission to edit");
-  // return  res.redirect(`/listings/${id}`);
-  // }
-  let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing });
-  if(typeof req.file!=="undefined"){
-    let url = req.file.path;
-    let filename = req.file.filename;
-    listing.image = {url,filename};
+  try {
+    let { id } = req.params;
+    let listing = await Listing.findById(id);
+    
+    if (!listing) {
+      req.flash("error", "Listing not found");
+      return res.redirect("/listings");
+    }
+
+    // Update listing fields while preserving owner
+    const updateData = { ...req.body.listing };
+    delete updateData.owner; // Ensure owner field is not overwritten
+    
+    // Update the listing
+    Object.assign(listing, updateData);
+    
+    // Handle image update if present
+    if (req.file) {
+      let url = req.file.path;
+      let filename = req.file.filename;
+      listing.image = { url, filename };
+    }
+    
     await listing.save();
+    req.flash("success", "Listing Updated!");
+    res.redirect(`/listings/${id}`);
+  } catch (error) {
+    console.error("Error updating listing:", error);
+    req.flash("error", "Error updating listing");
+    res.redirect(`/listings/${id}`);
   }
-  
-  req.flash("success", "Listing Updated!");
-  res.redirect(`/listings/${id}`);
 }
 
 async function deleteListings(req, res) {

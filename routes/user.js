@@ -40,7 +40,7 @@ router.route("/login")
   login
 );
 
-router.get("/logout", logout);
+router.post("/logout", logout);
 
 // Forgot password routes
 router.route("/forgot-password")

@@ -21,15 +21,29 @@ const multer  = require('multer');
 const {storage} = require("../cloudConfig.js")
 const upload = multer({ storage });
 
-router.get("/filter/:id",wrapAsync(filter));
+// Search route
 router.get("/search", wrapAsync(search));
 
+// Filter route
+router.get("/filter/:id", wrapAsync(filter));
+
+// New route must come before /:id routes
+router.get("/new", isLoggedIn, renderNewForm);
+
+// Delete route must come before the /:id route to prevent conflicts
+router.delete("/:id", isLoggedIn, isOwner, wrapAsync(deleteListings));
+
+// Index and Create routes
 router.route("/")
-.get( wrapAsync(index))
-.post( isLoggedIn,upload.single('listing[image]'),validateListing, wrapAsync(createListings));
-// .post(,(req,res)=>{
-//   res.send(req.file);
-// });
+.get(wrapAsync(index))
+.post(isLoggedIn, upload.single('listing[image]'), validateListing, wrapAsync(createListings));
+
+// Show, Update, and Edit routes
+router.route("/:id")
+.get(wrapAsync(showListings))
+.put(isLoggedIn, isOwner, upload.single('listing[image]'), validateListing, wrapAsync(updateListings));
+
+router.get("/:id/edit", isLoggedIn, isOwner, wrapAsync(renderEditForm));
 
 //New Route
 router.get("/new", isLoggedIn, renderNewForm);
@@ -38,29 +52,14 @@ router.get("/new", isLoggedIn, renderNewForm);
 //     console.log(res);
 // });
 // res.send("Hi, I am root");
-router.route("/:id")
-.get( wrapAsync(showListings))
-.put(
-  isLoggedIn,
-  isOwner,
-  upload.single('listing[image]'),
-  validateListing,
-  wrapAsync(updateListings)
-)
-.delete(isLoggedIn, isOwner, wrapAsync(deleteListings));
-//Show Route
-
 
 //Create Route
 
 
 //Edit Route
-router.get("/:id/edit", isLoggedIn, isOwner, wrapAsync(renderEditForm));
+
 
 //Update Route
-
-
-// Delete Route
 
 
 module.exports = router;

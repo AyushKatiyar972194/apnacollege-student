@@ -108,27 +108,152 @@ passport.use(new GoogleStrategy({
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: "/auth/google/callback"
   },
-  function(accessToken, refreshToken, profile, done) {
-    // For now, just pass the profile as the user object
-    return done(null, profile);
+  async function(accessToken, refreshToken, profile, done) {
+    try {
+      console.log('Google OAuth strategy - Profile:', {
+        id: profile.id,
+        email: profile.emails?.[0]?.value,
+        name: profile.displayName
+      });
+
+      // Find or create user
+      const email = profile.emails[0].value;
+      let user = await User.findOne({ 
+        $or: [
+          { email: email },
+          { googleId: profile.id }
+        ]
+      });
+
+      if (!user) {
+        // Create new user
+        const name = {
+          givenName: profile.name?.givenName || profile.displayName?.split(' ')[0] || null,
+          familyName: profile.name?.familyName || profile.displayName?.split(' ').slice(1).join(' ') || null
+        };
+
+        user = new User({
+          email: email,
+          googleId: profile.id,
+          name: name,
+          username: profile.displayName || email.split('@')[0],
+          isVerified: true // Google OAuth users are pre-verified
+        });
+
+        await user.save();
+        console.log('Created new user for Google OAuth:', { 
+          userId: user._id, 
+          email: user.email,
+          name: user.name,
+          username: user.username,
+          googleId: user.googleId
+        });
+      } else {
+        // Update existing user with Google ID if not set
+        if (!user.googleId) {
+          user.googleId = profile.id;
+        }
+        if (!user.name?.givenName && profile.name?.givenName) {
+          user.name = user.name || {};
+          user.name.givenName = profile.name.givenName;
+        }
+        if (!user.name?.familyName && profile.name?.familyName) {
+          user.name = user.name || {};
+          user.name.familyName = profile.name.familyName;
+        }
+        if (!user.username && profile.displayName) {
+          user.username = profile.displayName;
+        }
+        await user.save();
+        console.log('Updated existing user with Google data:', {
+          userId: user._id,
+          email: user.email,
+          name: user.name,
+          username: user.username,
+          googleId: user.googleId
+        });
+      }
+
+      // Ensure we're passing a proper user object to done()
+      if (!user._id) {
+        console.error('User object missing _id:', user);
+        return done(new Error('Invalid user object created'));
+      }
+
+      return done(null, user);
+    } catch (err) {
+      console.error('Error in Google OAuth strategy:', err);
+      return done(err);
+    }
   }
 ));
 
-passport.serializeUser(function(user, done) {
-  // For Google, serialize the whole profile
-  done(null, user);
+// Serialize user - store only the MongoDB _id in the session
+passport.serializeUser((user, done) => {
+  try {
+    // Ensure we have a valid user object with _id
+    if (!user || !user._id) {
+      console.error('Invalid user object during serialization:', user);
+      return done(new Error('Invalid user object'));
+    }
+    
+    // Store only the _id in the session
+    const userId = user._id.toString();
+    console.log('Serializing user:', { userId });
+    done(null, userId);
+  } catch (err) {
+    console.error('Error serializing user:', err);
+    done(err);
+  }
 });
-passport.deserializeUser(function(obj, done) {
-  done(null, obj);
+
+// Deserialize user - retrieve user from database using _id
+passport.deserializeUser(async (id, done) => {
+  try {
+    // Ensure we have a valid MongoDB ObjectId
+    if (!id || typeof id !== 'string') {
+      console.error('Invalid user id during deserialization:', id);
+      return done(null, false);
+    }
+
+    console.log('Deserializing user with id:', id);
+    const user = await User.findById(id);
+    
+    if (!user) {
+      console.log('User not found during deserialization');
+      return done(null, false);
+    }
+    
+    console.log('Deserialized user:', { 
+      userId: user._id, 
+      email: user.email,
+      username: user.username 
+    });
+    
+    done(null, user);
+  } catch (err) {
+    console.error('Error deserializing user:', err);
+    done(err);
+  }
 });
 
 // Make user available to all templates
 app.use((req, res, next) => {
+    // Set flash messages
     res.locals.success = req.flash("success");
     res.locals.error = req.flash("error");
-    res.locals.currUser = req.user;
-    // Add this line to ensure user is available in all requests
-    req.user = req.user || null;
+    
+    // Set current user - ensure it's always available
+    res.locals.currUser = req.user || null;
+    
+    // Log user state for debugging
+    console.log('User state in middleware:', {
+        isAuthenticated: req.isAuthenticated(),
+        userId: req.user?._id,
+        username: req.user?.username,
+        email: req.user?.email
+    });
+    
     next();
 });
 
@@ -144,23 +269,29 @@ app.use((req, res, next) => {
 
 // Google Auth Routes
 app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    prompt: 'select_account'
+  })
 );
 
 app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login', failureFlash: true }),
-  function(req, res) {
-    // Successful authentication, redirect to listings.
-    res.redirect('/listings');
+  passport.authenticate('google', { 
+    failureRedirect: '/login',
+    failureFlash: true
+  }),
+  (req, res) => {
+    console.log('Google OAuth callback - User:', req.user);
+    console.log('Google OAuth callback - Is authenticated:', req.isAuthenticated());
+    
+    // Get the redirect URL from session or default to listings
+    const redirectUrl = req.session.redirectUrl || '/listings';
+    delete req.session.redirectUrl; // Clear the stored URL
+    
+    req.flash('success', 'Welcome to FortuneVila!');
+    res.redirect(redirectUrl);
   }
 );
-
-app.get('/logout', (req, res, next) => {
-  req.logout(function(err) {
-    if (err) { return next(err); }
-    res.redirect('/listings');
-  });
-});
 
 // Mount routes in the correct order
 console.log('Mounting routes...');
