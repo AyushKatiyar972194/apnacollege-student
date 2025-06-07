@@ -101,7 +101,11 @@ function validateDates(checkIn, checkOut) {
         return { valid: false, error: 'Check-out date cannot be more than 1 year in the future' };
     }
 
-    return { valid: true };
+    return { 
+        valid: true,
+        checkInDate,
+        checkOutDate
+    };
 }
 
 // Create a new reservation and Razorpay order
@@ -175,8 +179,8 @@ async function createReservation(req, res) {
             user: dbUser._id, // Use the MongoDB user ID
             checkIn: dateValidation.checkInDate,
             checkOut: dateValidation.checkOutDate,
-            numberOfGuests,
-            totalPrice,
+            numberOfGuests: parseInt(numberOfGuests),
+            totalPrice: parseFloat(totalPrice),
             status: 'pending'
         });
 
@@ -185,7 +189,9 @@ async function createReservation(req, res) {
             console.log('Reservation saved successfully:', { 
                 reservationId: reservation._id,
                 userId: dbUser._id,
-                email: dbUser.email
+                email: dbUser.email,
+                checkIn: dateValidation.checkInDate,
+                checkOut: dateValidation.checkOutDate
             });
         } catch (dbError) {
             console.error('Database error while saving reservation:', {
@@ -193,7 +199,15 @@ async function createReservation(req, res) {
                 code: dbError.code,
                 message: dbError.message,
                 validationErrors: dbError.errors,
-                userId: dbUser._id
+                userId: dbUser._id,
+                reservationData: {
+                    listing: listingId,
+                    user: dbUser._id,
+                    checkIn: dateValidation.checkInDate,
+                    checkOut: dateValidation.checkOutDate,
+                    numberOfGuests,
+                    totalPrice
+                }
             });
             return res.status(500).json({
                 success: false,
